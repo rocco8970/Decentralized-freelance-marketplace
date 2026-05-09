@@ -1,0 +1,24 @@
+{
+  "name": "freelance-smart-contract",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy:local": "hardhat run scripts/deploy.js --network localhost",
+    "deploy:sepolia": "hardhat run scripts/deploy.js --network sepolia",
+    "node": "hardhat node",
+    "clean": "hardhat clean"
+  },
+  "keywords": ["blockchain", "ethereum", "smart-contract", "freelance"],
+  "author": "",
+  "license": "MIT",
+  "description": "Smart contracts for decentralized freelance marketplace",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "hardhat": "^2.24.0"
+  },
+  "dependencies": {
+    "dotenv": "^16.5.0"
+  }
+}

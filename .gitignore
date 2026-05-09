@@ -1,0 +1,25 @@
+# dependencies
+node_modules/
+**/node_modules/
+
+# environment variables
+.env
+**/.env
+
+# build folders
+dist/
+build/
+
+# hardhat cache
+cache/
+artifacts/
+
+# logs
+*.log
+
+# vscode
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
