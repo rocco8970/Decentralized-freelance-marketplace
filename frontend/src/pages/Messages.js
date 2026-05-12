@@ -1,150 +1,427 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useRef } from "react";
 import axios from "axios";
 import { AuthContext } from "../context/AuthContext";
+import { useLocation } from "react-router-dom";
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
+const generateEmailTemplate = (senderName, content) => `Hi there,
+
+You have a new message from ${senderName} on FreelanceChain.
+
+---
+"${content}"
+---
+
+Reply directly in the FreelanceChain app to continue the conversation.
+
+Best regards,
+The FreelanceChain Team`;
+
 const Messages = () => {
-    const { user } = useContext(AuthContext);
-    const [receiverId, setReceiverId] = useState("");
-    const [content, setContent] = useState("");
-    const [messages, setMessages] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [sending, setSending] = useState(false);
+  const { user, token } = useContext(AuthContext);
+  const location = useLocation();
 
-    const fetchMessages = async () => {
-        if (!receiverId || !user) return;
-        
-        try {
-            setLoading(true);
-            const token = localStorage.getItem('token');
-            const res = await axios.get(`${API_URL}/messages/${user._id}/${receiverId}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            setMessages(res.data);
-        } catch (error) {
-            console.error("Error fetching messages:", error);
-        } finally {
-            setLoading(false);
-        }
-    };
+  const [conversations, setConversations] = useState([]);
+  const [activeConv, setActiveConv] = useState(null); // { id, name }
+  const [messages, setMessages] = useState([]);
+  const [content, setContent] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [showNewChat, setShowNewChat] = useState(false);
+  const [newChatId, setNewChatId] = useState('');
+  const [newChatName, setNewChatName] = useState('');
+  const [showEmailPreview, setShowEmailPreview] = useState(false);
+  const [emailPreview, setEmailPreview] = useState('');
 
-    const sendMessage = async (e) => {
-        e.preventDefault();
-        if (!content.trim() || !user) return;
+  const messagesEndRef = useRef(null);
+  const inputRef = useRef(null);
 
-        try {
-            setSending(true);
-            const token = localStorage.getItem('token');
-            await axios.post(`${API_URL}/messages/send`, {
-                senderId: user._id,
-                receiverId,
-                content
-            }, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            setContent("");
-            fetchMessages();
-        } catch (error) {
-            console.error("Error sending message:", error);
-            alert("Failed to send message");
-        } finally {
-            setSending(false);
-        }
-    };
-
-    useEffect(() => {
-        if (receiverId && user) {
-            fetchMessages();
-        }
-    }, [receiverId, user]);
-
-    if (!user) {
-        return (
-            <div style={{ padding: '20px', textAlign: 'center' }}>
-                <h2>Messages</h2>
-                <p>Please login to access messages.</p>
-            </div>
-        );
+  // Auto-open conversation if navigated from Dashboard with state
+  useEffect(() => {
+    if (location.state?.receiverId) {
+      openConversation(location.state.receiverId, location.state.receiverName || 'User');
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state]);
 
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  const openConversation = async (otherId, otherName) => {
+    if (!otherId || !user) return;
+    setLoading(true);
+    try {
+      const res = await axios.get(`${API_URL}/messages/${user._id}/${otherId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setMessages(res.data);
+      setActiveConv({ id: otherId, name: otherName });
+
+      // Add to conversations list if not already there
+      setConversations(prev => {
+        const exists = prev.find(c => c.id === otherId);
+        if (exists) return prev;
+        return [{ id: otherId, name: otherName, lastMessage: '', time: new Date() }, ...prev];
+      });
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+      setTimeout(() => inputRef.current?.focus(), 100);
+    }
+  };
+
+  const sendMessage = async (e) => {
+    e.preventDefault();
+    if (!content.trim() || !activeConv || !user) return;
+    const msgText = content;
+    setContent('');
+    setSending(true);
+    try {
+      const res = await axios.post(`${API_URL}/messages/send`, {
+        receiverId: activeConv.id,
+        content: msgText
+      }, { headers: { Authorization: `Bearer ${token}` } });
+
+      setMessages(prev => [...prev, res.data]);
+      setConversations(prev =>
+        prev.map(c => c.id === activeConv.id
+          ? { ...c, lastMessage: msgText, time: new Date() }
+          : c
+        )
+      );
+    } catch (err) {
+      console.error(err);
+      setContent(msgText); // restore on error
+    } finally {
+      setSending(false);
+      inputRef.current?.focus();
+    }
+  };
+
+  const previewEmail = () => {
+    if (!content.trim()) return;
+    setEmailPreview(generateEmailTemplate(user?.name || 'A user', content));
+    setShowEmailPreview(true);
+  };
+
+  const formatTime = (date) => {
+    if (!date) return '';
+    const d = new Date(date);
+    const now = new Date();
+    const diff = now - d;
+    if (diff < 60000) return 'Just now';
+    if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+    if (diff < 86400000) return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleDateString();
+  };
+
+  if (!user) {
     return (
-        <div style={{ padding: '20px', maxWidth: '700px', margin: '0 auto' }}>
-            <h2>Messages</h2>
-            <div style={{ marginBottom: '20px' }}>
-                <label>Receiver User ID:</label><br />
-                <input
-                    type="text"
-                    placeholder="Enter receiver's user ID"
-                    value={receiverId}
-                    onChange={(e) => setReceiverId(e.target.value)}
-                    style={{ width: '100%', padding: '8px', marginTop: '5px' }}
-                />
-            </div>
-
-            {receiverId && (
-                <>
-                    <div style={{ 
-                        border: '1px solid #ddd', 
-                        borderRadius: '8px',
-                        padding: '15px',
-                        minHeight: '300px',
-                        maxHeight: '400px',
-                        overflowY: 'auto',
-                        backgroundColor: '#f9f9f9',
-                        marginBottom: '20px'
-                    }}>
-                        {loading && <p>Loading messages...</p>}
-                        {!loading && messages.length === 0 && <p>No messages yet. Start the conversation!</p>}
-                        {messages.map((msg, index) => (
-                            <div 
-                                key={index} 
-                                style={{ 
-                                    marginBottom: 15,
-                                    padding: '10px',
-                                    borderRadius: '6px',
-                                    backgroundColor: msg.senderId === user._id ? '#d1e7ff' : '#fff',
-                                    textAlign: msg.senderId === user._id ? 'right' : 'left'
-                                }}
-                            >
-                                <strong>{msg.senderId === user._id ? "You" : "Them"}:</strong> {msg.content}
-                                <div style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>
-                                    {new Date(msg.createdAt).toLocaleString()}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-
-                    <form onSubmit={sendMessage}>
-                        <div style={{ display: 'flex', gap: '10px' }}>
-                            <input
-                                type="text"
-                                placeholder="Type a message..."
-                                value={content}
-                                onChange={(e) => setContent(e.target.value)}
-                                style={{ flex: 1, padding: '10px' }}
-                                disabled={sending}
-                            />
-                            <button 
-                                type="submit"
-                                disabled={sending || !content.trim()}
-                                style={{ 
-                                    padding: '10px 20px',
-                                    backgroundColor: '#2196F3',
-                                    color: 'white',
-                                    border: 'none',
-                                    borderRadius: '4px',
-                                    cursor: sending || !content.trim() ? 'not-allowed' : 'pointer'
-                                }}
-                            >
-                                {sending ? 'Sending...' : 'Send'}
-                            </button>
-                        </div>
-                    </form>
-                </>
-            )}
-        </div>
+      <div style={{ maxWidth: '500px', margin: '100px auto', padding: '40px 24px', textAlign: 'center', zIndex: 1, position: 'relative' }}>
+        <div style={{ fontSize: '64px', marginBottom: '20px' }}>💬</div>
+        <h2 style={{ color: 'white', fontSize: '24px', marginBottom: '12px' }}>Messages</h2>
+        <p style={{ color: 'rgba(255,255,255,0.5)' }}>Please log in to access your messages.</p>
+      </div>
     );
+  }
+
+  return (
+    <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '40px 24px', position: 'relative', zIndex: 1 }}>
+
+      {/* Header */}
+      <div style={{ marginBottom: '32px', animation: 'fadeInUp 0.5s ease-out' }}>
+        <h1 className="section-title">Messages</h1>
+        <p className="section-subtitle">Chat with clients and freelancers</p>
+      </div>
+
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: '300px 1fr',
+        gap: '20px',
+        height: '600px',
+        animation: 'fadeInUp 0.5s ease-out 0.1s both',
+      }}>
+
+        {/* ── Sidebar ── */}
+        <div style={{
+          background: 'rgba(255,255,255,0.03)',
+          border: '1px solid rgba(255,255,255,0.07)',
+          borderRadius: '20px',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+        }}>
+          {/* Sidebar header */}
+          <div style={{ padding: '18px 20px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ color: 'white', fontWeight: '700', fontSize: '15px' }}>
+              💬 Chats {conversations.length > 0 && <span style={{ color: 'rgba(255,255,255,0.4)', fontWeight: '400', fontSize: '13px' }}>({conversations.length})</span>}
+            </span>
+            <button onClick={() => setShowNewChat(true)} style={{
+              background: 'rgba(108,99,255,0.2)', border: '1px solid rgba(108,99,255,0.3)',
+              borderRadius: '8px', padding: '6px 12px', color: '#6C63FF',
+              cursor: 'pointer', fontSize: '12px', fontWeight: '700', transition: 'all 0.2s',
+            }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(108,99,255,0.35)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'rgba(108,99,255,0.2)'}
+            >+ New</button>
+          </div>
+
+          {/* Conversation list */}
+          <div style={{ flex: 1, overflowY: 'auto' }}>
+            {conversations.length === 0 ? (
+              <div style={{ padding: '40px 20px', textAlign: 'center', color: 'rgba(255,255,255,0.3)' }}>
+                <div style={{ fontSize: '36px', marginBottom: '12px' }}>💬</div>
+                <div style={{ fontSize: '13px', marginBottom: '6px', color: 'rgba(255,255,255,0.4)' }}>No conversations yet</div>
+                <div style={{ fontSize: '12px' }}>Accept a job or start a new chat</div>
+              </div>
+            ) : (
+              conversations.map(conv => (
+                <div key={conv.id}
+                  onClick={() => openConversation(conv.id, conv.name)}
+                  style={{
+                    padding: '14px 20px', cursor: 'pointer', transition: 'all 0.2s',
+                    background: activeConv?.id === conv.id ? 'rgba(108,99,255,0.15)' : 'transparent',
+                    borderLeft: activeConv?.id === conv.id ? '3px solid #6C63FF' : '3px solid transparent',
+                  }}
+                  onMouseEnter={e => { if (activeConv?.id !== conv.id) e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+                  onMouseLeave={e => { if (activeConv?.id !== conv.id) e.currentTarget.style.background = 'transparent'; }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                    <span style={{ color: 'white', fontWeight: '600', fontSize: '14px' }}>{conv.name}</span>
+                    <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '11px' }}>{formatTime(conv.time)}</span>
+                  </div>
+                  <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '12px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {conv.lastMessage || 'Start the conversation...'}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* ── Chat area ── */}
+        <div style={{
+          background: 'rgba(255,255,255,0.03)',
+          border: '1px solid rgba(255,255,255,0.07)',
+          borderRadius: '20px',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+        }}>
+          {!activeConv ? (
+            /* Empty state */
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.3)', padding: '40px', textAlign: 'center' }}>
+              <div style={{ fontSize: '64px', marginBottom: '16px', opacity: 0.4 }}>💬</div>
+              <div style={{ fontSize: '18px', fontWeight: '600', color: 'rgba(255,255,255,0.5)', marginBottom: '8px' }}>No conversation selected</div>
+              <div style={{ fontSize: '14px', marginBottom: '28px', maxWidth: '300px', lineHeight: '1.6' }}>
+                Select a chat from the left, or go to your Dashboard and click <strong style={{ color: 'rgba(255,255,255,0.6)' }}>"💬 Message"</strong> on an accepted job.
+              </div>
+              <button onClick={() => setShowNewChat(true)} className="btn-gradient" style={{ padding: '12px 28px' }}>
+                + Start New Chat
+              </button>
+            </div>
+          ) : (
+            <>
+              {/* Chat header */}
+              <div style={{ padding: '16px 24px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{
+                  width: '42px', height: '42px', borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #6C63FF, #FF6584)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: 'white', fontWeight: '800', fontSize: '17px', flexShrink: 0,
+                }}>
+                  {activeConv.name[0]?.toUpperCase()}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ color: 'white', fontWeight: '700', fontSize: '15px' }}>{activeConv.name}</div>
+                  <div style={{ color: '#43E97B', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#43E97B', display: 'inline-block', animation: 'pulse 2s infinite' }} />
+                    Active now
+                  </div>
+                </div>
+                <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: '12px', fontFamily: 'monospace' }}>
+                  ID: {activeConv.id?.slice(0, 8)}...
+                </div>
+              </div>
+
+              {/* Messages */}
+              <div style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {loading ? (
+                  <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.4)', padding: '40px' }}>
+                    <div className="spinner" style={{ margin: '0 auto 12px', width: '24px', height: '24px', borderColor: 'rgba(255,255,255,0.1)', borderTopColor: '#6C63FF' }} />
+                    Loading messages...
+                  </div>
+                ) : messages.length === 0 ? (
+                  <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.3)', padding: '40px' }}>
+                    <div style={{ fontSize: '40px', marginBottom: '12px' }}>👋</div>
+                    <div style={{ fontSize: '15px', color: 'rgba(255,255,255,0.4)', marginBottom: '6px' }}>Say hello!</div>
+                    <div style={{ fontSize: '13px' }}>This is the start of your conversation with <strong style={{ color: 'rgba(255,255,255,0.6)' }}>{activeConv.name}</strong></div>
+                  </div>
+                ) : (
+                  messages.map((msg, i) => {
+                    const isMine = msg.senderId === user._id || msg.senderId?._id === user._id;
+                    const showDate = i === 0 || new Date(msg.createdAt).toDateString() !== new Date(messages[i - 1]?.createdAt).toDateString();
+                    return (
+                      <React.Fragment key={i}>
+                        {showDate && (
+                          <div style={{ textAlign: 'center', margin: '8px 0' }}>
+                            <span style={{ background: 'rgba(255,255,255,0.06)', borderRadius: '20px', padding: '4px 14px', fontSize: '11px', color: 'rgba(255,255,255,0.3)' }}>
+                              {new Date(msg.createdAt).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}
+                            </span>
+                          </div>
+                        )}
+                        <div style={{ display: 'flex', justifyContent: isMine ? 'flex-end' : 'flex-start', alignItems: 'flex-end', gap: '8px' }}>
+                          {!isMine && (
+                            <div style={{
+                              width: '28px', height: '28px', borderRadius: '50%', flexShrink: 0,
+                              background: 'linear-gradient(135deg, #6C63FF, #FF6584)',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              color: 'white', fontSize: '12px', fontWeight: '700',
+                            }}>
+                              {activeConv.name[0]?.toUpperCase()}
+                            </div>
+                          )}
+                          <div>
+                            <div className={`msg-bubble ${isMine ? 'sent' : 'received'}`}>
+                              {msg.content}
+                            </div>
+                            <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.2)', marginTop: '4px', textAlign: isMine ? 'right' : 'left', paddingLeft: '4px', paddingRight: '4px' }}>
+                              {formatTime(msg.createdAt)}
+                            </div>
+                          </div>
+                        </div>
+                      </React.Fragment>
+                    );
+                  })
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+
+              {/* Input bar */}
+              <div style={{ padding: '14px 20px', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+                <form onSubmit={sendMessage} style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                  <div style={{ flex: 1, position: 'relative' }}>
+                    <input
+                      ref={inputRef}
+                      type="text"
+                      placeholder={`Message ${activeConv.name}...`}
+                      value={content}
+                      onChange={e => setContent(e.target.value)}
+                      disabled={sending}
+                      className="input-dark"
+                      style={{ paddingRight: '48px' }}
+                    />
+                    <button type="button" onClick={previewEmail} title="Preview as email"
+                      style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px', opacity: content.trim() ? 0.7 : 0.3, transition: 'opacity 0.2s' }}
+                      onMouseEnter={e => e.currentTarget.style.opacity = '1'}
+                      onMouseLeave={e => e.currentTarget.style.opacity = content.trim() ? '0.7' : '0.3'}
+                    >📧</button>
+                  </div>
+                  <button type="submit" disabled={sending || !content.trim()}
+                    style={{
+                      background: content.trim() ? 'linear-gradient(135deg, #6C63FF, #8B5CF6)' : 'rgba(255,255,255,0.08)',
+                      border: 'none', borderRadius: '12px', padding: '13px 20px',
+                      color: content.trim() ? 'white' : 'rgba(255,255,255,0.3)',
+                      cursor: content.trim() ? 'pointer' : 'not-allowed',
+                      fontWeight: '700', fontSize: '14px', transition: 'all 0.2s ease',
+                      whiteSpace: 'nowrap', minWidth: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                    }}
+                    onMouseEnter={e => { if (content.trim()) e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                    onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+                  >
+                    {sending ? <div className="spinner" style={{ width: '16px', height: '16px' }} /> : <>Send ➤</>}
+                  </button>
+                </form>
+                <div style={{ color: 'rgba(255,255,255,0.2)', fontSize: '11px', marginTop: '8px' }}>
+                  Press Enter to send · 📧 to preview as email notification
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* ── New Chat Modal ── */}
+      {showNewChat && (
+        <div className="modal-overlay" onClick={() => setShowNewChat(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <h3 style={{ color: 'white', fontSize: '20px', fontWeight: '700', marginBottom: '8px' }}>💬 Start New Chat</h3>
+            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '14px', marginBottom: '24px', lineHeight: '1.6' }}>
+              Enter the <strong style={{ color: 'rgba(255,255,255,0.8)' }}>User ID</strong> of the person you want to message.<br />
+              You can find it in their job listing or your Dashboard.
+            </p>
+            <div className="form-group">
+              <label className="form-label">User ID</label>
+              <input type="text" placeholder="e.g. 6641f3a2b4e1c2d3e4f56789"
+                value={newChatId} onChange={e => setNewChatId(e.target.value)}
+                className="input-dark" autoFocus />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Their Name (optional)</label>
+              <input type="text" placeholder="e.g. John Doe"
+                value={newChatName} onChange={e => setNewChatName(e.target.value)}
+                className="input-dark" />
+            </div>
+            <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
+              <button
+                onClick={() => {
+                  if (newChatId.trim()) {
+                    openConversation(newChatId.trim(), newChatName.trim() || 'User');
+                    setShowNewChat(false);
+                    setNewChatId('');
+                    setNewChatName('');
+                  }
+                }}
+                className="btn-gradient" style={{ flex: 1, padding: '13px' }}
+                disabled={!newChatId.trim()}
+              >
+                Open Chat
+              </button>
+              <button onClick={() => setShowNewChat(false)} className="btn-outline" style={{ flex: 1, padding: '13px' }}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Email Preview Modal ── */}
+      {showEmailPreview && (
+        <div className="modal-overlay" onClick={() => setShowEmailPreview(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '580px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ color: 'white', fontSize: '18px', fontWeight: '700' }}>📧 Email Notification Preview</h3>
+              <button onClick={() => setShowEmailPreview(false)}
+                style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: '22px', lineHeight: 1 }}>×</button>
+            </div>
+            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px', marginBottom: '16px' }}>
+              This is how your message would appear as an email to the recipient:
+            </p>
+            <div style={{
+              background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: '12px', padding: '20px',
+              fontFamily: 'monospace', fontSize: '13px', color: 'rgba(255,255,255,0.65)',
+              whiteSpace: 'pre-wrap', lineHeight: '1.7', maxHeight: '280px', overflowY: 'auto',
+            }}>
+              {emailPreview}
+            </div>
+            <div style={{ display: 'flex', gap: '12px', marginTop: '20px' }}>
+              <button onClick={() => { setShowEmailPreview(false); sendMessage({ preventDefault: () => {} }); }}
+                className="btn-gradient" style={{ flex: 1, padding: '13px' }}>
+                ✅ Send Message
+              </button>
+              <button onClick={() => setShowEmailPreview(false)} className="btn-outline" style={{ flex: 1, padding: '13px' }}>
+                Edit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 };
 
 export default Messages;

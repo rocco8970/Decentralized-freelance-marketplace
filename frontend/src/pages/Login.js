@@ -1,196 +1,157 @@
 import React, { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
+import { WalletContext } from '../context/WalletContext';
 import { useNavigate, Link } from 'react-router-dom';
+import axios from 'axios';
+
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 const Login = () => {
-    const { login } = useContext(AuthContext);
-    const navigate = useNavigate();
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
+  const { login } = useContext(AuthContext);
+  const { connectWallet, currentAccount, isConnecting } = useContext(WalletContext);
+  const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [tab, setTab] = useState('email'); // 'email' | 'wallet'
 
-    const handleLogin = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        setError('');
-        
-        const result = await login(email, password);
-        setLoading(false);
-        
-        if (result.success) {
-            navigate('/dashboard');
-        } else {
-            setError(result.message);
-        }
-    };
+  const handleEmailLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true); setError('');
+    const result = await login(email, password);
+    setLoading(false);
+    if (result.success) navigate('/dashboard');
+    else setError(result.message);
+  };
 
-    const containerStyle = {
-        minHeight: 'calc(100vh - 80px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '40px 20px'
-    };
+  const handleWalletLogin = async () => {
+    try {
+      setLoading(true); setError('');
+      await connectWallet();
+      // After wallet connected, authenticate with backend
+      const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+      if (accounts.length > 0) {
+        const res = await axios.post(`${API_URL}/auth/wallet-auth`, { walletAddress: accounts[0] });
+        localStorage.setItem('token', res.data.token);
+        window.location.href = '/dashboard';
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Wallet login failed');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const cardStyle = {
-        background: 'white',
-        borderRadius: '24px',
-        padding: '50px',
-        maxWidth: '480px',
-        width: '100%',
-        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15)',
-        animation: 'fadeIn 0.6s ease-out'
-    };
+  return (
+    <div style={{
+      minHeight: 'calc(100vh - 70px)', display: 'flex',
+      alignItems: 'center', justifyContent: 'center', padding: '40px 24px',
+      position: 'relative', zIndex: 1,
+    }}>
+      {/* Background glow */}
+      <div style={{
+        position: 'absolute', top: '20%', left: '50%', transform: 'translateX(-50%)',
+        width: '600px', height: '400px', borderRadius: '50%',
+        background: 'radial-gradient(circle, rgba(108,99,255,0.12), transparent)',
+        pointerEvents: 'none',
+      }} />
 
-    const titleStyle = {
-        fontSize: '32px',
-        fontWeight: '800',
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        WebkitBackgroundClip: 'text',
-        WebkitTextFillColor: 'transparent',
-        backgroundClip: 'text',
-        marginBottom: '10px',
-        textAlign: 'center'
-    };
-
-    const inputGroupStyle = {
-        marginBottom: '25px'
-    };
-
-    const labelStyle = {
-        display: 'block',
-        marginBottom: '8px',
-        color: '#333',
-        fontWeight: '600',
-        fontSize: '14px'
-    };
-
-    const inputStyle = {
-        width: '100%',
-        padding: '14px 18px',
-        border: '2px solid #e0e0e0',
-        borderRadius: '12px',
-        fontSize: '16px',
-        transition: 'all 0.3s ease',
-        background: 'white',
-        boxSizing: 'border-box'
-    };
-
-    const buttonStyle = {
-        width: '100%',
-        padding: '16px',
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        color: 'white',
-        border: 'none',
-        borderRadius: '12px',
-        fontSize: '18px',
-        fontWeight: '700',
-        cursor: loading ? 'not-allowed' : 'pointer',
-        transition: 'all 0.3s ease',
-        boxShadow: '0 8px 20px rgba(102, 126, 234, 0.3)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '10px'
-    };
-
-    return (
-        <div style={containerStyle}>
-            <div style={cardStyle}>
-                <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-                    <div style={{ fontSize: '64px', marginBottom: '15px' }}>🔐</div>
-                    <h2 style={titleStyle}>Welcome Back!</h2>
-                    <p style={{ color: '#666', fontSize: '15px' }}>Login to access your account</p>
-                </div>
-
-                <form onSubmit={handleLogin}>
-                    <div style={inputGroupStyle}>
-                        <label style={labelStyle}>Email Address</label>
-                        <input
-                            type="email"
-                            placeholder="Enter your email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            required
-                            style={inputStyle}
-                            disabled={loading}
-                            onFocus={(e) => e.target.style.borderColor = '#667eea'}
-                            onBlur={(e) => e.target.style.borderColor = '#e0e0e0'}
-                        />
-                    </div>
-
-                    <div style={inputGroupStyle}>
-                        <label style={labelStyle}>Password</label>
-                        <input
-                            type="password"
-                            placeholder="Enter your password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                            style={inputStyle}
-                            disabled={loading}
-                            onFocus={(e) => e.target.style.borderColor = '#667eea'}
-                            onBlur={(e) => e.target.style.borderColor = '#e0e0e0'}
-                        />
-                    </div>
-
-                    {error && (
-                        <div style={{
-                            padding: '12px 16px',
-                            background: '#fee',
-                            border: '2px solid #fcc',
-                            borderRadius: '10px',
-                            color: '#c33',
-                            fontSize: '14px',
-                            marginBottom: '20px',
-                            animation: 'fadeIn 0.3s ease-out'
-                        }}>
-                            ⚠️ {error}
-                        </div>
-                    )}
-
-                    <button 
-                        type="submit" 
-                        disabled={loading}
-                        style={buttonStyle}
-                        onMouseEnter={(e) => !loading && (e.target.style.transform = 'translateY(-2px)')}
-                        onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}
-                    >
-                        {loading ? (
-                            <>
-                                <span>Logging in</span>
-                                <div className="spinner"></div>
-                            </>
-                        ) : (
-                            <span>Login</span>
-                        )}
-                    </button>
-                </form>
-
-                <div style={{ 
-                    marginTop: '30px', 
-                    textAlign: 'center',
-                    paddingTop: '25px',
-                    borderTop: '1px solid #e0e0e0'
-                }}>
-                    <p style={{ color: '#666', fontSize: '15px' }}>
-                        Don't have an account?{' '}
-                        <Link 
-                            to="/register" 
-                            style={{ 
-                                color: '#667eea', 
-                                fontWeight: '700',
-                                textDecoration: 'none'
-                            }}
-                        >
-                            Register here
-                        </Link>
-                    </p>
-                </div>
-            </div>
+      <div style={{
+        background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(20px)',
+        border: '1px solid rgba(255,255,255,0.08)', borderRadius: '28px',
+        padding: '48px', maxWidth: '460px', width: '100%',
+        animation: 'fadeInUp 0.6s ease-out',
+        boxShadow: '0 40px 80px rgba(0,0,0,0.4)',
+      }}>
+        {/* Header */}
+        <div style={{ textAlign: 'center', marginBottom: '36px' }}>
+          <div style={{ fontSize: '56px', marginBottom: '16px', animation: 'float 3s ease-in-out infinite' }}>🔐</div>
+          <h2 style={{
+            fontFamily: "'Space Grotesk', sans-serif", fontSize: '28px', fontWeight: '700',
+            background: 'linear-gradient(135deg, #fff, rgba(255,255,255,0.7))',
+            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+            marginBottom: '8px',
+          }}>Welcome Back</h2>
+          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '14px' }}>Sign in to your FreelanceChain account</p>
         </div>
-    );
+
+        {/* Tab switcher */}
+        <div className="tab-group">
+          <button className={`tab-btn ${tab === 'email' ? 'active' : ''}`} onClick={() => setTab('email')}>
+            📧 Email Login
+          </button>
+          <button className={`tab-btn ${tab === 'wallet' ? 'active' : ''}`} onClick={() => setTab('wallet')}>
+            🦊 MetaMask
+          </button>
+        </div>
+
+        {/* Email Login */}
+        {tab === 'email' && (
+          <form onSubmit={handleEmailLogin}>
+            <div className="form-group">
+              <label className="form-label">Email Address</label>
+              <input type="email" placeholder="you@example.com" value={email}
+                onChange={e => setEmail(e.target.value)} required disabled={loading}
+                className="input-dark" />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Password</label>
+              <input type="password" placeholder="Enter your password" value={password}
+                onChange={e => setPassword(e.target.value)} required disabled={loading}
+                className="input-dark" />
+            </div>
+
+            {error && <div className="alert alert-error">⚠️ {error}</div>}
+
+            <button type="submit" disabled={loading} className="btn-gradient"
+              style={{ width: '100%', padding: '16px', fontSize: '16px', borderRadius: '14px' }}>
+              {loading ? <><div className="spinner" style={{ display: 'inline-block', marginRight: '8px' }} />Signing in...</> : 'Sign In'}
+            </button>
+          </form>
+        )}
+
+        {/* Wallet Login */}
+        {tab === 'wallet' && (
+          <div style={{ textAlign: 'center' }}>
+            <div style={{
+              background: 'rgba(255,165,0,0.08)', border: '1px solid rgba(255,165,0,0.2)',
+              borderRadius: '16px', padding: '24px', marginBottom: '24px',
+            }}>
+              <div style={{ fontSize: '48px', marginBottom: '12px' }}>🦊</div>
+              <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '14px', lineHeight: '1.6' }}>
+                Connect your MetaMask wallet to sign in. A new account will be created automatically if you're new.
+              </p>
+            </div>
+
+            {currentAccount && (
+              <div className="wallet-chip" style={{ marginBottom: '20px', justifyContent: 'center' }}>
+                ✅ {currentAccount.slice(0, 10)}...{currentAccount.slice(-8)}
+              </div>
+            )}
+
+            {error && <div className="alert alert-error">⚠️ {error}</div>}
+
+            <button onClick={handleWalletLogin} disabled={loading || isConnecting} className="btn-gradient"
+              style={{ width: '100%', padding: '16px', fontSize: '16px', borderRadius: '14px' }}>
+              {loading || isConnecting
+                ? <><div className="spinner" style={{ display: 'inline-block', marginRight: '8px' }} />Connecting...</>
+                : '🦊 Connect & Sign In'}
+            </button>
+          </div>
+        )}
+
+        <div style={{ marginTop: '28px', textAlign: 'center', paddingTop: '24px', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '14px' }}>
+            Don't have an account?{' '}
+            <Link to="/register" style={{ color: '#6C63FF', fontWeight: '700', textDecoration: 'none' }}>
+              Create one free
+            </Link>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default Login;

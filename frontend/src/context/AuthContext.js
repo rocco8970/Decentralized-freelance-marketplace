@@ -7,16 +7,17 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
+    const [token, setToken] = useState(localStorage.getItem('token') || null);
     const [loading, setLoading] = useState(true);
 
     const login = async (email, password) => {
         try {
             const res = await axios.post(`${API_URL}/auth/login`, { email, password });
             localStorage.setItem('token', res.data.token);
+            setToken(res.data.token);
             setUser(res.data.user);
             return { success: true };
         } catch (error) {
-            console.error("Login error:", error);
             const message = error.response?.data?.message || 'Login Failed';
             return { success: false, message };
         }
@@ -27,7 +28,6 @@ export const AuthProvider = ({ children }) => {
             await axios.post(`${API_URL}/auth/register`, { name, email, password });
             return { success: true, message: 'Registration Successful! Please login.' };
         } catch (error) {
-            console.error("Registration error:", error);
             const message = error.response?.data?.message || 'Registration Failed';
             return { success: false, message };
         }
@@ -35,23 +35,25 @@ export const AuthProvider = ({ children }) => {
 
     const logout = () => {
         localStorage.removeItem('token');
+        setToken(null);
         setUser(null);
     };
 
     const fetchProfile = async () => {
-        const token = localStorage.getItem('token');
-        if (!token) {
+        const storedToken = localStorage.getItem('token');
+        if (!storedToken) {
             setLoading(false);
             return;
         }
         try {
-            const res = await axios.get(`${API_URL}/auth/profile`, {
-                headers: { Authorization: `Bearer ${token}` }
+            const res = await axios.get(`${API_URL}/users/profile`, {
+                headers: { Authorization: `Bearer ${storedToken}` }
             });
             setUser(res.data.user);
+            setToken(storedToken);
         } catch (error) {
-            console.error("Fetch profile error:", error);
             localStorage.removeItem('token');
+            setToken(null);
         } finally {
             setLoading(false);
         }
@@ -62,7 +64,7 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     return (
-        <AuthContext.Provider value={{ user, login, register, logout, loading }}>
+        <AuthContext.Provider value={{ user, token, login, register, logout, loading }}>
             {children}
         </AuthContext.Provider>
     );

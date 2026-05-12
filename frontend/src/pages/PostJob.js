@@ -5,240 +5,221 @@ import { WalletContext } from "../context/WalletContext";
 import { AuthContext } from "../context/AuthContext";
 import axios from "axios";
 
+const SKILLS = ['React', 'Node.js', 'Solidity', 'Python', 'Design', 'Writing', 'Marketing', 'Data Science', 'Mobile', 'DevOps'];
+
 const PostJob = () => {
-    const { currentAccount } = useContext(WalletContext);
-    const { user } = useContext(AuthContext);
-    const [title, setTitle] = useState("");
-    const [description, setDescription] = useState("");
-    const [budget, setBudget] = useState("");
-    const [deadline, setDeadline] = useState("");
-    const [amount, setAmount] = useState("");
-    const [loading, setLoading] = useState(false);
-    const [method, setMethod] = useState(user ? "email" : "metamask");
+  const { currentAccount } = useContext(WalletContext);
+  const { user, token } = useContext(AuthContext);
+  const [method, setMethod] = useState(user ? "email" : "metamask");
+  const [loading, setLoading] = useState(false);
+  const [toast, setToast] = useState(null);
+  const [selectedSkills, setSelectedSkills] = useState([]);
 
-    // Post job via Email/Backend API
-    const postJobViaEmail = async (e) => {
-        e.preventDefault();
-        
-        if (!user) {
-            alert("Please log in with email first!");
-            return;
-        }
+  const [emailForm, setEmailForm] = useState({ title: '', description: '', budget: '', deadline: '' });
+  const [chainForm, setChainForm] = useState({ description: '', amount: '' });
 
-        if (!title || !description || !budget || !deadline) {
-            alert("Please fill in all fields!");
-            return;
-        }
+  const showToast = (msg, type = 'success') => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 4000);
+  };
 
-        try {
-            setLoading(true);
-            const token = localStorage.getItem("token");
-            const response = await axios.post(
-                `${process.env.REACT_APP_API_URL}/jobs`,
-                {
-                    title,
-                    description,
-                    budget: parseFloat(budget),
-                    deadline,
-                    postedBy: user._id
-                },
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
+  const setE = (k) => (e) => setEmailForm(f => ({ ...f, [k]: e.target.value }));
+  const setC = (k) => (e) => setChainForm(f => ({ ...f, [k]: e.target.value }));
 
-            alert("Job posted successfully via email!");
-            setTitle("");
-            setDescription("");
-            setBudget("");
-            setDeadline("");
-        } catch (error) {
-            console.error("Error posting job:", error);
-            alert(error.response?.data?.message || "Error posting job!");
-        } finally {
-            setLoading(false);
-        }
-    };
+  const toggleSkill = (s) => setSelectedSkills(prev =>
+    prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]
+  );
 
-    // Post job via MetaMask/Blockchain
-    const createJobViaMetaMask = async (e) => {
-        e.preventDefault();
-        
-        if (!currentAccount) {
-            alert("Please connect your wallet first!");
-            return;
-        }
+  const postEmailJob = async (e) => {
+    e.preventDefault();
+    if (!user) { showToast('Please log in first', 'error'); return; }
+    try {
+      setLoading(true);
+      await axios.post(`${process.env.REACT_APP_API_URL}/jobs`, {
+        ...emailForm,
+        budget: parseFloat(emailForm.budget),
+        skills: selectedSkills,
+        postedBy: user._id,
+      }, { headers: { Authorization: `Bearer ${token}` } });
+      showToast('Job posted successfully! Freelancers can now apply.');
+      setEmailForm({ title: '', description: '', budget: '', deadline: '' });
+      setSelectedSkills([]);
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Error posting job', 'error');
+    } finally { setLoading(false); }
+  };
 
-        if (!description || !amount) {
-            alert("Please fill in job description and amount!");
-            return;
-        }
+  const postChainJob = async (e) => {
+    e.preventDefault();
+    if (!currentAccount) { showToast('Connect your wallet first', 'error'); return; }
+    try {
+      setLoading(true);
+      const contract = await getContract();
+      const tx = await contract.postJob(chainForm.description, { value: ethers.parseEther(chainForm.amount) });
+      await tx.wait();
+      showToast('Job posted on blockchain! ETH locked in escrow.');
+      setChainForm({ description: '', amount: '' });
+    } catch (err) {
+      showToast(err.message || 'Error posting job', 'error');
+    } finally { setLoading(false); }
+  };
 
-        try {
-            setLoading(true);
-            const contract = await getContract();
-            const tx = await contract.postJob(description, { 
-                value: ethers.parseEther(amount) 
-            });
-            await tx.wait();
-            alert("Job posted successfully via MetaMask!");
-            setDescription("");
-            setAmount("");
-        } catch (error) {
-            console.error("Error posting job:", error);
-            alert(error.message || "Error posting job!");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    return (
-        <div style={{ padding: '20px', maxWidth: '600px', margin: '0 auto' }}>
-            <h2>Post a New Job</h2>
-            
-            {/* Method Selection */}
-            {user && currentAccount && (
-                <div style={{ marginBottom: '20px', padding: '10px', backgroundColor: '#f0f0f0', borderRadius: '5px' }}>
-                    <p><strong>Choose posting method:</strong></p>
-                    <label>
-                        <input
-                            type="radio"
-                            value="email"
-                            checked={method === "email"}
-                            onChange={(e) => setMethod(e.target.value)}
-                        />
-                        📧 Post via Email (Backend)
-                    </label>
-                    <br />
-                    <label>
-                        <input
-                            type="radio"
-                            value="metamask"
-                            checked={method === "metamask"}
-                            onChange={(e) => setMethod(e.target.value)}
-                        />
-                        🦊 Post via MetaMask (Blockchain)
-                    </label>
-                </div>
-            )}
-
-            {/* Email Method */}
-            {method === "email" && (
-                <>
-                    {!user && (
-                        <p style={{ color: 'red' }}>Please log in with email to post a job via this method.</p>
-                    )}
-                    {user && (
-                        <form onSubmit={postJobViaEmail}>
-                            <div style={{ marginBottom: '15px' }}>
-                                <label>Job Title:</label><br />
-                                <input
-                                    type="text"
-                                    placeholder="e.g., Build a website"
-                                    value={title}
-                                    onChange={(e) => setTitle(e.target.value)}
-                                    style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
-                                    disabled={loading}
-                                />
-                            </div>
-                            <div style={{ marginBottom: '15px' }}>
-                                <label>Job Description:</label><br />
-                                <textarea
-                                    placeholder="Describe the job in detail..."
-                                    value={description}
-                                    onChange={(e) => setDescription(e.target.value)}
-                                    style={{ width: '100%', minHeight: '100px', padding: '8px', boxSizing: 'border-box' }}
-                                    disabled={loading}
-                                />
-                            </div>
-                            <div style={{ marginBottom: '15px' }}>
-                                <label>Budget ($):</label><br />
-                                <input
-                                    type="number"
-                                    placeholder="500"
-                                    value={budget}
-                                    onChange={(e) => setBudget(e.target.value)}
-                                    style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
-                                    disabled={loading}
-                                />
-                            </div>
-                            <div style={{ marginBottom: '15px' }}>
-                                <label>Deadline:</label><br />
-                                <input
-                                    type="date"
-                                    value={deadline}
-                                    onChange={(e) => setDeadline(e.target.value)}
-                                    style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
-                                    disabled={loading}
-                                />
-                            </div>
-                            <button 
-                                type="submit" 
-                                disabled={loading || !user}
-                                style={{ 
-                                    padding: '10px 20px', 
-                                    cursor: loading || !user ? 'not-allowed' : 'pointer',
-                                    backgroundColor: '#4CAF50',
-                                    color: 'white',
-                                    border: 'none',
-                                    borderRadius: '5px'
-                                }}
-                            >
-                                {loading ? 'Posting...' : 'Post Job via Email'}
-                            </button>
-                        </form>
-                    )}
-                </>
-            )}
-
-            {/* MetaMask Method */}
-            {method === "metamask" && (
-                <>
-                    {!currentAccount && (
-                        <p style={{ color: 'red' }}>Please connect your wallet to post a job via blockchain.</p>
-                    )}
-                    {currentAccount && (
-                        <form onSubmit={createJobViaMetaMask}>
-                            <div style={{ marginBottom: '15px' }}>
-                                <label>Job Description:</label><br />
-                                <textarea
-                                    placeholder="Describe the job..."
-                                    value={description}
-                                    onChange={(e) => setDescription(e.target.value)}
-                                    style={{ width: '100%', minHeight: '100px', padding: '8px', boxSizing: 'border-box' }}
-                                    disabled={loading}
-                                />
-                            </div>
-                            <div style={{ marginBottom: '15px' }}>
-                                <label>Payment Amount (ETH):</label><br />
-                                <input
-                                    type="text"
-                                    placeholder="0.1"
-                                    value={amount}
-                                    onChange={(e) => setAmount(e.target.value)}
-                                    style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
-                                    disabled={loading}
-                                />
-                            </div>
-                            <button 
-                                type="submit" 
-                                disabled={loading || !currentAccount}
-                                style={{ 
-                                    padding: '10px 20px', 
-                                    cursor: loading || !currentAccount ? 'not-allowed' : 'pointer',
-                                    backgroundColor: '#FF6B35',
-                                    color: 'white',
-                                    border: 'none',
-                                    borderRadius: '5px'
-                                }}
-                            >
-                                {loading ? 'Posting...' : 'Post Job via MetaMask'}
-                            </button>
-                        </form>
-                    )}
-                </>
-            )}
+  return (
+    <div style={{ maxWidth: '760px', margin: '0 auto', padding: '40px 24px', position: 'relative', zIndex: 1 }}>
+      {toast && (
+        <div className="toast" style={{ borderLeft: `3px solid ${toast.type === 'error' ? '#FF6584' : '#43E97B'}` }}>
+          {toast.type === 'error' ? '⚠️' : '✅'} {toast.msg}
         </div>
-    );
+      )}
+
+      <div style={{ marginBottom: '40px', animation: 'fadeInUp 0.5s ease-out' }}>
+        <h1 className="section-title">Post a Job</h1>
+        <p className="section-subtitle">Find the perfect freelancer for your project</p>
+      </div>
+
+      {/* Method selector */}
+      <div className="tab-group" style={{ animation: 'fadeInUp 0.5s ease-out 0.1s both' }}>
+        <button className={`tab-btn ${method === 'email' ? 'active' : ''}`} onClick={() => setMethod('email')}>
+          📧 Post via Email
+        </button>
+        <button className={`tab-btn ${method === 'metamask' ? 'active' : ''}`} onClick={() => setMethod('metamask')}>
+          🦊 Post via MetaMask
+        </button>
+      </div>
+
+      {/* Email Form */}
+      {method === 'email' && (
+        <div style={{ animation: 'fadeInUp 0.4s ease-out' }}>
+          {!user ? (
+            <div className="alert alert-warning">⚠️ Please log in with email to post a job via this method.</div>
+          ) : (
+            <form onSubmit={postEmailJob}>
+              <div style={{
+                background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)',
+                borderRadius: '20px', padding: '32px',
+              }}>
+                <div className="form-group">
+                  <label className="form-label">Job Title</label>
+                  <input type="text" placeholder="e.g., Build a DeFi Dashboard" value={emailForm.title}
+                    onChange={setE('title')} required disabled={loading} className="input-dark" />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Job Description</label>
+                  <textarea placeholder="Describe the project in detail — requirements, deliverables, timeline..."
+                    value={emailForm.description} onChange={setE('description')} required disabled={loading}
+                    className="input-dark" style={{ minHeight: '140px', resize: 'vertical' }} />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div className="form-group">
+                    <label className="form-label">Budget (USD)</label>
+                    <input type="number" placeholder="500" value={emailForm.budget}
+                      onChange={setE('budget')} required disabled={loading} className="input-dark" min="1" />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Deadline</label>
+                    <input type="date" value={emailForm.deadline}
+                      onChange={setE('deadline')} disabled={loading} className="input-dark" />
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Required Skills</label>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                    {SKILLS.map(s => (
+                      <button key={s} type="button" onClick={() => toggleSkill(s)}
+                        style={{
+                          padding: '6px 14px', borderRadius: '8px', cursor: 'pointer',
+                          border: selectedSkills.includes(s) ? '1px solid rgba(108,99,255,0.6)' : '1px solid rgba(255,255,255,0.1)',
+                          background: selectedSkills.includes(s) ? 'rgba(108,99,255,0.2)' : 'rgba(255,255,255,0.03)',
+                          color: selectedSkills.includes(s) ? '#6C63FF' : 'rgba(255,255,255,0.5)',
+                          fontSize: '13px', fontWeight: '600', transition: 'all 0.2s ease',
+                        }}>
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <button type="submit" disabled={loading} className="btn-gradient"
+                  style={{ width: '100%', padding: '16px', fontSize: '16px', borderRadius: '14px', marginTop: '8px' }}>
+                  {loading ? <><div className="spinner" style={{ display: 'inline-block', marginRight: '8px' }} />Posting...</> : '📧 Post Job via Email'}
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      )}
+
+      {/* MetaMask Form */}
+      {method === 'metamask' && (
+        <div style={{ animation: 'fadeInUp 0.4s ease-out' }}>
+          {!currentAccount ? (
+            <div className="alert alert-warning">⚠️ Connect your MetaMask wallet to post a blockchain job.</div>
+          ) : (
+            <form onSubmit={postChainJob}>
+              <div style={{
+                background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)',
+                borderRadius: '20px', padding: '32px',
+              }}>
+                {/* Info banner */}
+                <div style={{
+                  background: 'rgba(255,165,0,0.08)', border: '1px solid rgba(255,165,0,0.2)',
+                  borderRadius: '14px', padding: '16px', marginBottom: '24px',
+                  display: 'flex', gap: '12px', alignItems: 'flex-start',
+                }}>
+                  <span style={{ fontSize: '20px' }}>🔒</span>
+                  <div>
+                    <div style={{ color: 'rgba(255,255,255,0.8)', fontWeight: '600', fontSize: '14px', marginBottom: '4px' }}>
+                      ETH Escrow Protection
+                    </div>
+                    <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px', lineHeight: '1.5' }}>
+                      Your ETH will be locked in the smart contract until you mark the job as complete. Fully trustless.
+                    </div>
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Job Description</label>
+                  <textarea placeholder="Describe the job clearly — what needs to be done, expected output..."
+                    value={chainForm.description} onChange={setC('description')} required disabled={loading}
+                    className="input-dark" style={{ minHeight: '140px', resize: 'vertical' }} />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Payment Amount (ETH)</label>
+                  <div style={{ position: 'relative' }}>
+                    <span style={{
+                      position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)',
+                      color: '#43E97B', fontWeight: '700', fontSize: '16px',
+                    }}>⟠</span>
+                    <input type="text" placeholder="0.05" value={chainForm.amount}
+                      onChange={setC('amount')} required disabled={loading}
+                      className="input-dark" style={{ paddingLeft: '40px' }} />
+                  </div>
+                  {chainForm.amount && !isNaN(chainForm.amount) && (
+                    <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '12px', marginTop: '6px' }}>
+                      ≈ ${(parseFloat(chainForm.amount) * 3200).toFixed(2)} USD (estimated)
+                    </div>
+                  )}
+                </div>
+
+                <div className="wallet-chip" style={{ marginBottom: '20px' }}>
+                  <span>🦊</span> {currentAccount.slice(0, 10)}...{currentAccount.slice(-8)}
+                </div>
+
+                <button type="submit" disabled={loading} className="btn-gradient"
+                  style={{ width: '100%', padding: '16px', fontSize: '16px', borderRadius: '14px' }}>
+                  {loading ? <><div className="spinner" style={{ display: 'inline-block', marginRight: '8px' }} />Posting to Blockchain...</> : '🦊 Post Job via MetaMask'}
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      )}
+    </div>
+  );
 };
 
 export default PostJob;
-
