@@ -14,7 +14,7 @@ async function main() {
   console.log("FreelanceMarketplace deployed to:", contractAddress);
 
   // Save contract address to frontend
-  const frontendPath = path.join(__dirname, "../../freelance-frontend/src/contracts");
+  const frontendPath = path.join(__dirname, "../../frontend/src/contracts");
   
   // Create directory if it doesn't exist
   if (!fs.existsSync(frontendPath)) {
