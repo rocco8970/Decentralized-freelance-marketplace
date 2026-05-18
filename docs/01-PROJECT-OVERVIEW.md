@@ -81,6 +81,8 @@ decentralized-freelance-marketplace/
 - **React Router DOM 7.5.2** - Routing
 - **Ethers.js 6.14.1** - Blockchain interaction
 - **Axios 1.9.0** - HTTP client
+- **Framer Motion 11.0.0** - Animations and transitions
+- **React Toastify 11.0.5** - Toast notifications
 - **MetaMask** - Wallet integration
 
 ### Backend
@@ -254,6 +256,13 @@ struct Job {
 ### Messages
 - `POST /api/messages/send` - Send message (protected)
 - `GET /api/messages/:user1Id/:user2Id` - Get messages (protected)
+
+### Reviews
+- `POST /api/reviews` - Create a review (protected)
+- `GET /api/reviews/user/:userId` - Get reviews for a user
+
+### Health
+- `GET /api/health` - API health check
 
 ## 🔗 Smart Contract Functions
 

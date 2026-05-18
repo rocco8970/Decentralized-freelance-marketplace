@@ -38,7 +38,8 @@ frontend/
 - **React Router DOM 7.5.2** - Routing
 - **Ethers.js 6.14.1** - Blockchain interaction
 - **Axios 1.9.0** - HTTP client
-- **React Toastify 11.0.5** - Notifications
+- **Framer Motion 11.0.0** - Animations and page transitions
+- **React Toastify 11.0.5** - Toast notifications
 
 ## 🎯 Key Features
 

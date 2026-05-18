@@ -55,11 +55,14 @@ backend/
 - `POST /api/auth/register` - Register user
 - `POST /api/auth/login` - Login user
 - `POST /api/auth/wallet-auth` - Wallet authentication
-- `GET /api/users/profile` - Get user profile
+- `GET /api/users/profile` - Get user profile (protected)
 - `POST /api/jobs` - Create job
 - `GET /api/jobs` - Get all jobs
-- `POST /api/messages/send` - Send message
-- `GET /api/messages/:user1Id/:user2Id` - Get messages
+- `POST /api/messages/send` - Send message (protected)
+- `GET /api/messages/:user1Id/:user2Id` - Get messages (protected)
+- `POST /api/reviews` - Create review (protected)
+- `GET /api/reviews/user/:userId` - Get user reviews
+- `GET /api/health` - API health check
 
 See [API Reference](../docs/07-API-REFERENCE.md) for complete documentation.
 

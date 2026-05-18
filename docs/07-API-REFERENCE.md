@@ -353,6 +353,87 @@ Authorization: Bearer <token>
 
 ---
 
+## Review Endpoints
+
+### POST /api/reviews
+Create a review for a completed job. **Requires authentication.**
+
+**Headers:**
+```
+Authorization: Bearer <token>
+```
+
+**Request Body:**
+```json
+{
+  "jobId": "0",
+  "target": "0x9876543210fedcba9876543210fedcba98765432",
+  "rating": 5,
+  "comment": "Excellent work, delivered on time!"
+}
+```
+
+**Response:** `201 Created`
+```json
+{
+  "message": "Review created",
+  "review": {
+    "_id": "507f1f77bcf86cd799439014",
+    "jobId": "0",
+    "reviewer": "0x1234567890abcdef1234567890abcdef12345678",
+    "target": "0x9876543210fedcba9876543210fedcba98765432",
+    "rating": 5,
+    "comment": "Excellent work, delivered on time!"
+  }
+}
+```
+
+**Errors:**
+- `401 Unauthorized`: No token or invalid token
+- `500 Internal Server Error`: Failed to create review
+
+---
+
+### GET /api/reviews/user/:userId
+Get all reviews for a specific user.
+
+**URL Parameters:**
+- `userId`: The wallet address or user ID to query reviews for
+
+**Response:** `200 OK`
+```json
+[
+  {
+    "_id": "507f1f77bcf86cd799439014",
+    "jobId": "0",
+    "reviewer": "0x1234567890abcdef1234567890abcdef12345678",
+    "target": "0x9876543210fedcba9876543210fedcba98765432",
+    "rating": 5,
+    "comment": "Excellent work, delivered on time!"
+  }
+]
+```
+
+**Errors:**
+- `500 Internal Server Error`: Failed to fetch reviews
+
+---
+
+## Health Endpoint
+
+### GET /api/health
+Check if the API is running.
+
+**Response:** `200 OK`
+```json
+{
+  "status": "ok",
+  "message": "FreelanceChain API running"
+}
+```
+
+---
+
 ## Smart Contract Functions
 
 ### postJob(description) payable

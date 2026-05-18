@@ -7,8 +7,9 @@ backend/
 ├── controllers/           # Business logic
 │   ├── authController.js  # Authentication logic
 │   ├── jobController.js   # Job management
-│   ├── userController.js  # User profile
-│   └── messageController.js # Messaging
+│   ├── usercontroller.js  # User profile
+│   ├── messagecontroller.js # Messaging
+│   └── reviewController.js  # Reviews
 ├── models/               # MongoDB schemas
 │   ├── User.js           # User model
 │   ├── Job.js            # Job model
@@ -18,7 +19,8 @@ backend/
 │   ├── authRoutes.js     # Auth routes
 │   ├── jobRoutes.js      # Job routes
 │   ├── userRoutes.js     # User routes
-│   └── messageRoutes.js  # Message routes
+│   ├── messageRoutes.js  # Message routes
+│   └── reviewRoutes.js   # Review routes
 ├── middleware/           # Custom middleware
 │   └── authMiddleware.js # JWT authentication
 ├── config/               # Configuration
@@ -75,11 +77,11 @@ backend/
 ### Review Model
 ```javascript
 {
-  jobId: String,
-  reviewer: String,
-  target: String,
-  rating: Number,
-  comment: String
+  jobId: String,       // Blockchain job ID
+  reviewer: String,    // Reviewer wallet/user ID
+  target: String,      // Target user wallet/ID
+  rating: Number,      // 1-5 star rating
+  comment: String      // Review text
 }
 ```
 
@@ -311,6 +313,71 @@ Authorization: Bearer <token>
 ]
 ```
 
+### Review Routes (`/api/reviews`)
+
+#### POST /api/reviews
+Create a review for a completed job (protected)
+
+**Headers:**
+```
+Authorization: Bearer <token>
+```
+
+**Request:**
+```json
+{
+  "jobId": "0",
+  "target": "0xabcd...",
+  "rating": 5,
+  "comment": "Excellent work, delivered on time!"
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Review created",
+  "review": {
+    "_id": "507f1f77bcf86cd799439014",
+    "jobId": "0",
+    "reviewer": "0x1234...",
+    "target": "0xabcd...",
+    "rating": 5,
+    "comment": "Excellent work, delivered on time!"
+  }
+}
+```
+
+#### GET /api/reviews/user/:userId
+Get all reviews targeting a specific user
+
+**Response:**
+```json
+[
+  {
+    "_id": "507f1f77bcf86cd799439014",
+    "jobId": "0",
+    "reviewer": "0x1234...",
+    "target": "0xabcd...",
+    "rating": 5,
+    "comment": "Excellent work, delivered on time!"
+  }
+]
+```
+
+### Health Check
+
+#### GET /api/health
+Check API status
+
+**Response:**
+```json
+{
+  "status": "ok",
+  "message": "FreelanceChain API running"
+}
+```
+
 ## 🔐 Authentication Middleware
 
 ### protect Middleware
@@ -354,10 +421,15 @@ JWT_SECRET=your_super_secret_jwt_key_change_this_in_production
 ```
 
 ### CORS Configuration
-```javascript
-app.use(cors()); // Allow all origins in development
 
-// Production:
+The backend uses ES modules (`"type": "module"` in package.json). Use `import` syntax:
+
+```javascript
+// Development (allow all origins)
+import cors from 'cors';
+app.use(cors());
+
+// Production (restrict to your frontend domain)
 app.use(cors({
   origin: ['https://your-frontend.vercel.app'],
   credentials: true
