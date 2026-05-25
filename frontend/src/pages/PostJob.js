@@ -95,8 +95,8 @@ const PostJob = () => {
           ) : (
             <form onSubmit={postEmailJob}>
               <div style={{
-                background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)',
-                borderRadius: '20px', padding: '32px',
+                background: '#FFFFFF', border: '1px solid #E5E7EB',
+                borderRadius: '12px', padding: '32px',
               }}>
                 <div className="form-group">
                   <label className="form-label">Job Title</label>
@@ -131,9 +131,9 @@ const PostJob = () => {
                       <button key={s} type="button" onClick={() => toggleSkill(s)}
                         style={{
                           padding: '6px 14px', borderRadius: '8px', cursor: 'pointer',
-                          border: selectedSkills.includes(s) ? '1px solid rgba(108,99,255,0.6)' : '1px solid rgba(255,255,255,0.1)',
-                          background: selectedSkills.includes(s) ? 'rgba(108,99,255,0.2)' : 'rgba(255,255,255,0.03)',
-                          color: selectedSkills.includes(s) ? '#6C63FF' : 'rgba(255,255,255,0.5)',
+                          border: selectedSkills.includes(s) ? '1px solid #6366F1' : '1px solid #D1D5DB',
+                          background: selectedSkills.includes(s) ? '#EEF2FF' : '#F9FAFB',
+                          color: selectedSkills.includes(s) ? '#4F46E5' : '#6B7280',
                           fontSize: '13px', fontWeight: '600', transition: 'all 0.2s ease',
                         }}>
                         {s}
@@ -160,21 +160,21 @@ const PostJob = () => {
           ) : (
             <form onSubmit={postChainJob}>
               <div style={{
-                background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)',
-                borderRadius: '20px', padding: '32px',
+                background: '#FFFFFF', border: '1px solid #E5E7EB',
+                borderRadius: '12px', padding: '32px',
               }}>
                 {/* Info banner */}
                 <div style={{
-                  background: 'rgba(255,165,0,0.08)', border: '1px solid rgba(255,165,0,0.2)',
-                  borderRadius: '14px', padding: '16px', marginBottom: '24px',
+                  background: '#FFFBEB', border: '1px solid #FDE68A',
+                  borderRadius: '10px', padding: '16px', marginBottom: '24px',
                   display: 'flex', gap: '12px', alignItems: 'flex-start',
                 }}>
                   <span style={{ fontSize: '20px' }}>🔒</span>
                   <div>
-                    <div style={{ color: 'rgba(255,255,255,0.8)', fontWeight: '600', fontSize: '14px', marginBottom: '4px' }}>
+                    <div style={{ color: '#92400E', fontWeight: '600', fontSize: '14px', marginBottom: '4px' }}>
                       ETH Escrow Protection
                     </div>
-                    <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px', lineHeight: '1.5' }}>
+                    <div style={{ color: '#B45309', fontSize: '13px', lineHeight: '1.5' }}>
                       Your ETH will be locked in the smart contract until you mark the job as complete. Fully trustless.
                     </div>
                   </div>
@@ -192,14 +192,14 @@ const PostJob = () => {
                   <div style={{ position: 'relative' }}>
                     <span style={{
                       position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)',
-                      color: '#43E97B', fontWeight: '700', fontSize: '16px',
+                      color: '#16A34A', fontWeight: '700', fontSize: '16px',
                     }}>⟠</span>
                     <input type="text" placeholder="0.05" value={chainForm.amount}
                       onChange={setC('amount')} required disabled={loading}
                       className="input-dark" style={{ paddingLeft: '40px' }} />
                   </div>
                   {chainForm.amount && !isNaN(chainForm.amount) && (
-                    <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '12px', marginTop: '6px' }}>
+                    <div style={{ color: '#9CA3AF', fontSize: '12px', marginTop: '6px' }}>
                       ≈ ${(parseFloat(chainForm.amount) * 3200).toFixed(2)} USD (estimated)
                     </div>
                   )}

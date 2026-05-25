@@ -95,7 +95,7 @@ const BrowseJobs = () => {
   );
 
   const SkeletonCard = () => (
-    <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '20px', padding: '28px' }}>
+    <div style={{ background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: '12px', padding: '28px' }}>
       {[80, 60, 40, 40].map((w, i) => (
         <div key={i} className="skeleton" style={{ height: '16px', width: `${w}%`, marginBottom: '12px' }} />
       ))}
@@ -131,7 +131,7 @@ const BrowseJobs = () => {
 
         {/* Search */}
         <div style={{ flex: 1, minWidth: '200px', position: 'relative' }}>
-          <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)', fontSize: '16px' }}>🔍</span>
+          <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF', fontSize: '16px' }}>🔍</span>
           <input type="text" placeholder="Search jobs..." value={search}
             onChange={e => setSearch(e.target.value)}
             className="input-dark" style={{ paddingLeft: '42px' }} />
@@ -154,7 +154,7 @@ const BrowseJobs = () => {
 
       {/* Job count */}
       {!loading && (
-        <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px', marginBottom: '20px' }}>
+        <div style={{ color: '#6B7280', fontSize: '13px', marginBottom: '20px' }}>
           {filtered.length} job{filtered.length !== 1 ? 's' : ''} found
         </div>
       )}
@@ -186,11 +186,11 @@ const BrowseJobs = () => {
 
               {/* Title / Description */}
               {job.title && (
-                <h3 style={{ color: 'white', fontSize: '17px', fontWeight: '700', marginBottom: '8px', lineHeight: '1.4' }}>
+                <h3 style={{ color: '#111827', fontSize: '17px', fontWeight: '700', marginBottom: '8px', lineHeight: '1.4' }}>
                   {job.title}
                 </h3>
               )}
-              <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: '14px', lineHeight: '1.6', marginBottom: '16px' }}>
+              <p style={{ color: '#6B7280', fontSize: '14px', lineHeight: '1.6', marginBottom: '16px' }}>
                 {job.description?.length > 120 ? job.description.slice(0, 120) + '...' : job.description}
               </p>
 
@@ -200,26 +200,26 @@ const BrowseJobs = () => {
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginBottom: '20px' }}>
                 {job.source === 'email' ? (
                   <>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#43E97B', fontSize: '15px', fontWeight: '700' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#16A34A', fontSize: '15px', fontWeight: '700' }}>
                       💵 ${job.budget}
                     </div>
                     {job.deadline && (
-                      <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <div style={{ color: '#6B7280', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                         📅 {new Date(job.deadline).toLocaleDateString()}
                       </div>
                     )}
                     {job.postedBy?.name && (
-                      <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <div style={{ color: '#6B7280', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                         👤 {job.postedBy.name}
                       </div>
                     )}
                   </>
                 ) : (
                   <>
-                    <div style={{ color: '#43E97B', fontSize: '15px', fontWeight: '700' }}>
+                    <div style={{ color: '#16A34A', fontSize: '15px', fontWeight: '700' }}>
                       ⟠ {job.payment} ETH
                     </div>
-                    <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '12px', fontFamily: 'monospace' }}>
+                    <div style={{ color: '#6B7280', fontSize: '12px', fontFamily: 'monospace' }}>
                       {job.client?.slice(0, 8)}...{job.client?.slice(-6)}
                     </div>
                   </>
@@ -231,8 +231,8 @@ const BrowseJobs = () => {
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '16px' }}>
                   {job.skills.map(s => (
                     <span key={s} style={{
-                      background: 'rgba(108,99,255,0.12)', border: '1px solid rgba(108,99,255,0.25)',
-                      borderRadius: '6px', padding: '3px 10px', fontSize: '12px', color: '#6C63FF', fontWeight: '600',
+                      background: '#EEF2FF', border: '1px solid #C7D2FE',
+                      borderRadius: '6px', padding: '3px 10px', fontSize: '12px', color: '#4F46E5', fontWeight: '600',
                     }}>{s}</span>
                   ))}
                 </div>

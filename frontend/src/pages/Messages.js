@@ -23,7 +23,7 @@ const Messages = () => {
   const location = useLocation();
 
   const [conversations, setConversations] = useState([]);
-  const [activeConv, setActiveConv] = useState(null); // { id, name }
+  const [activeConv, setActiveConv] = useState(null);
   const [messages, setMessages] = useState([]);
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(false);
@@ -37,7 +37,6 @@ const Messages = () => {
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
-  // Auto-open conversation if navigated from Dashboard with state
   useEffect(() => {
     if (location.state?.receiverId) {
       openConversation(location.state.receiverId, location.state.receiverName || 'User');
@@ -58,8 +57,6 @@ const Messages = () => {
       });
       setMessages(res.data);
       setActiveConv({ id: otherId, name: otherName });
-
-      // Add to conversations list if not already there
       setConversations(prev => {
         const exists = prev.find(c => c.id === otherId);
         if (exists) return prev;
@@ -84,17 +81,13 @@ const Messages = () => {
         receiverId: activeConv.id,
         content: msgText
       }, { headers: { Authorization: `Bearer ${token}` } });
-
       setMessages(prev => [...prev, res.data]);
       setConversations(prev =>
-        prev.map(c => c.id === activeConv.id
-          ? { ...c, lastMessage: msgText, time: new Date() }
-          : c
-        )
+        prev.map(c => c.id === activeConv.id ? { ...c, lastMessage: msgText, time: new Date() } : c)
       );
     } catch (err) {
       console.error(err);
-      setContent(msgText); // restore on error
+      setContent(msgText);
     } finally {
       setSending(false);
       inputRef.current?.focus();
@@ -120,10 +113,10 @@ const Messages = () => {
 
   if (!user) {
     return (
-      <div style={{ maxWidth: '500px', margin: '100px auto', padding: '40px 24px', textAlign: 'center', zIndex: 1, position: 'relative' }}>
+      <div style={{ maxWidth: '500px', margin: '100px auto', padding: '40px 24px', textAlign: 'center' }}>
         <div style={{ fontSize: '64px', marginBottom: '20px' }}>💬</div>
-        <h2 style={{ color: 'white', fontSize: '24px', marginBottom: '12px' }}>Messages</h2>
-        <p style={{ color: 'rgba(255,255,255,0.5)' }}>Please log in to access your messages.</p>
+        <h2 style={{ color: '#111827', fontSize: '24px', marginBottom: '12px' }}>Messages</h2>
+        <p style={{ color: '#6B7280' }}>Please log in to access your messages.</p>
       </div>
     );
   }
@@ -145,36 +138,36 @@ const Messages = () => {
         animation: 'fadeInUp 0.5s ease-out 0.1s both',
       }}>
 
-        {/* ── Sidebar ── */}
+        {/* Sidebar */}
         <div style={{
-          background: 'rgba(255,255,255,0.03)',
-          border: '1px solid rgba(255,255,255,0.07)',
-          borderRadius: '20px',
+          background: '#FFFFFF',
+          border: '1px solid #E5E7EB',
+          borderRadius: '12px',
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
         }}>
           {/* Sidebar header */}
-          <div style={{ padding: '18px 20px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ color: 'white', fontWeight: '700', fontSize: '15px' }}>
-              💬 Chats {conversations.length > 0 && <span style={{ color: 'rgba(255,255,255,0.4)', fontWeight: '400', fontSize: '13px' }}>({conversations.length})</span>}
+          <div style={{ padding: '18px 20px', borderBottom: '1px solid #E5E7EB', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ color: '#111827', fontWeight: '700', fontSize: '15px' }}>
+              💬 Chats {conversations.length > 0 && <span style={{ color: '#9CA3AF', fontWeight: '400', fontSize: '13px' }}>({conversations.length})</span>}
             </span>
             <button onClick={() => setShowNewChat(true)} style={{
-              background: 'rgba(108,99,255,0.2)', border: '1px solid rgba(108,99,255,0.3)',
-              borderRadius: '8px', padding: '6px 12px', color: '#6C63FF',
+              background: '#EEF2FF', border: '1px solid #C7D2FE',
+              borderRadius: '8px', padding: '6px 12px', color: '#4F46E5',
               cursor: 'pointer', fontSize: '12px', fontWeight: '700', transition: 'all 0.2s',
             }}
-              onMouseEnter={e => e.currentTarget.style.background = 'rgba(108,99,255,0.35)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'rgba(108,99,255,0.2)'}
+              onMouseEnter={e => e.currentTarget.style.background = '#E0E7FF'}
+              onMouseLeave={e => e.currentTarget.style.background = '#EEF2FF'}
             >+ New</button>
           </div>
 
           {/* Conversation list */}
           <div style={{ flex: 1, overflowY: 'auto' }}>
             {conversations.length === 0 ? (
-              <div style={{ padding: '40px 20px', textAlign: 'center', color: 'rgba(255,255,255,0.3)' }}>
+              <div style={{ padding: '40px 20px', textAlign: 'center', color: '#9CA3AF' }}>
                 <div style={{ fontSize: '36px', marginBottom: '12px' }}>💬</div>
-                <div style={{ fontSize: '13px', marginBottom: '6px', color: 'rgba(255,255,255,0.4)' }}>No conversations yet</div>
+                <div style={{ fontSize: '13px', marginBottom: '6px', color: '#6B7280' }}>No conversations yet</div>
                 <div style={{ fontSize: '12px' }}>Accept a job or start a new chat</div>
               </div>
             ) : (
@@ -183,17 +176,17 @@ const Messages = () => {
                   onClick={() => openConversation(conv.id, conv.name)}
                   style={{
                     padding: '14px 20px', cursor: 'pointer', transition: 'all 0.2s',
-                    background: activeConv?.id === conv.id ? 'rgba(108,99,255,0.15)' : 'transparent',
-                    borderLeft: activeConv?.id === conv.id ? '3px solid #6C63FF' : '3px solid transparent',
+                    background: activeConv?.id === conv.id ? '#EEF2FF' : 'transparent',
+                    borderLeft: activeConv?.id === conv.id ? '3px solid #4F46E5' : '3px solid transparent',
                   }}
-                  onMouseEnter={e => { if (activeConv?.id !== conv.id) e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+                  onMouseEnter={e => { if (activeConv?.id !== conv.id) e.currentTarget.style.background = '#F9FAFB'; }}
                   onMouseLeave={e => { if (activeConv?.id !== conv.id) e.currentTarget.style.background = 'transparent'; }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                    <span style={{ color: 'white', fontWeight: '600', fontSize: '14px' }}>{conv.name}</span>
-                    <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '11px' }}>{formatTime(conv.time)}</span>
+                    <span style={{ color: '#111827', fontWeight: '600', fontSize: '14px' }}>{conv.name}</span>
+                    <span style={{ color: '#9CA3AF', fontSize: '11px' }}>{formatTime(conv.time)}</span>
                   </div>
-                  <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '12px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div style={{ color: '#6B7280', fontSize: '12px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {conv.lastMessage || 'Start the conversation...'}
                   </div>
                 </div>
@@ -202,22 +195,21 @@ const Messages = () => {
           </div>
         </div>
 
-        {/* ── Chat area ── */}
+        {/* Chat area */}
         <div style={{
-          background: 'rgba(255,255,255,0.03)',
-          border: '1px solid rgba(255,255,255,0.07)',
-          borderRadius: '20px',
+          background: '#FFFFFF',
+          border: '1px solid #E5E7EB',
+          borderRadius: '12px',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
         }}>
           {!activeConv ? (
-            /* Empty state */
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.3)', padding: '40px', textAlign: 'center' }}>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#9CA3AF', padding: '40px', textAlign: 'center' }}>
               <div style={{ fontSize: '64px', marginBottom: '16px', opacity: 0.4 }}>💬</div>
-              <div style={{ fontSize: '18px', fontWeight: '600', color: 'rgba(255,255,255,0.5)', marginBottom: '8px' }}>No conversation selected</div>
-              <div style={{ fontSize: '14px', marginBottom: '28px', maxWidth: '300px', lineHeight: '1.6' }}>
-                Select a chat from the left, or go to your Dashboard and click <strong style={{ color: 'rgba(255,255,255,0.6)' }}>"💬 Message"</strong> on an accepted job.
+              <div style={{ fontSize: '18px', fontWeight: '600', color: '#6B7280', marginBottom: '8px' }}>No conversation selected</div>
+              <div style={{ fontSize: '14px', marginBottom: '28px', maxWidth: '300px', lineHeight: '1.6', color: '#6B7280' }}>
+                Select a chat from the left, or go to your Dashboard and click <strong style={{ color: '#374151' }}>"💬 Message"</strong> on an accepted job.
               </div>
               <button onClick={() => setShowNewChat(true)} className="btn-gradient" style={{ padding: '12px 28px' }}>
                 + Start New Chat
@@ -226,39 +218,39 @@ const Messages = () => {
           ) : (
             <>
               {/* Chat header */}
-              <div style={{ padding: '16px 24px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ padding: '16px 24px', borderBottom: '1px solid #E5E7EB', display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <div style={{
                   width: '42px', height: '42px', borderRadius: '50%',
-                  background: 'linear-gradient(135deg, #6C63FF, #FF6584)',
+                  background: 'linear-gradient(135deg, #6366F1, #EC4899)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   color: 'white', fontWeight: '800', fontSize: '17px', flexShrink: 0,
                 }}>
                   {activeConv.name[0]?.toUpperCase()}
                 </div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ color: 'white', fontWeight: '700', fontSize: '15px' }}>{activeConv.name}</div>
-                  <div style={{ color: '#43E97B', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#43E97B', display: 'inline-block', animation: 'pulse 2s infinite' }} />
+                  <div style={{ color: '#111827', fontWeight: '700', fontSize: '15px' }}>{activeConv.name}</div>
+                  <div style={{ color: '#16A34A', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#16A34A', display: 'inline-block' }} />
                     Active now
                   </div>
                 </div>
-                <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: '12px', fontFamily: 'monospace' }}>
+                <div style={{ color: '#9CA3AF', fontSize: '12px', fontFamily: 'monospace' }}>
                   ID: {activeConv.id?.slice(0, 8)}...
                 </div>
               </div>
 
               {/* Messages */}
-              <div style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: '10px', background: '#F9FAFB' }}>
                 {loading ? (
-                  <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.4)', padding: '40px' }}>
-                    <div className="spinner" style={{ margin: '0 auto 12px', width: '24px', height: '24px', borderColor: 'rgba(255,255,255,0.1)', borderTopColor: '#6C63FF' }} />
+                  <div style={{ textAlign: 'center', color: '#6B7280', padding: '40px' }}>
+                    <div className="spinner" style={{ margin: '0 auto 12px', width: '24px', height: '24px' }} />
                     Loading messages...
                   </div>
                 ) : messages.length === 0 ? (
-                  <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.3)', padding: '40px' }}>
+                  <div style={{ textAlign: 'center', color: '#9CA3AF', padding: '40px' }}>
                     <div style={{ fontSize: '40px', marginBottom: '12px' }}>👋</div>
-                    <div style={{ fontSize: '15px', color: 'rgba(255,255,255,0.4)', marginBottom: '6px' }}>Say hello!</div>
-                    <div style={{ fontSize: '13px' }}>This is the start of your conversation with <strong style={{ color: 'rgba(255,255,255,0.6)' }}>{activeConv.name}</strong></div>
+                    <div style={{ fontSize: '15px', color: '#6B7280', marginBottom: '6px' }}>Say hello!</div>
+                    <div style={{ fontSize: '13px', color: '#6B7280' }}>This is the start of your conversation with <strong style={{ color: '#374151' }}>{activeConv.name}</strong></div>
                   </div>
                 ) : (
                   messages.map((msg, i) => {
@@ -268,7 +260,7 @@ const Messages = () => {
                       <React.Fragment key={i}>
                         {showDate && (
                           <div style={{ textAlign: 'center', margin: '8px 0' }}>
-                            <span style={{ background: 'rgba(255,255,255,0.06)', borderRadius: '20px', padding: '4px 14px', fontSize: '11px', color: 'rgba(255,255,255,0.3)' }}>
+                            <span style={{ background: '#E5E7EB', borderRadius: '20px', padding: '4px 14px', fontSize: '11px', color: '#6B7280' }}>
                               {new Date(msg.createdAt).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}
                             </span>
                           </div>
@@ -277,7 +269,7 @@ const Messages = () => {
                           {!isMine && (
                             <div style={{
                               width: '28px', height: '28px', borderRadius: '50%', flexShrink: 0,
-                              background: 'linear-gradient(135deg, #6C63FF, #FF6584)',
+                              background: 'linear-gradient(135deg, #6366F1, #EC4899)',
                               display: 'flex', alignItems: 'center', justifyContent: 'center',
                               color: 'white', fontSize: '12px', fontWeight: '700',
                             }}>
@@ -288,7 +280,7 @@ const Messages = () => {
                             <div className={`msg-bubble ${isMine ? 'sent' : 'received'}`}>
                               {msg.content}
                             </div>
-                            <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.2)', marginTop: '4px', textAlign: isMine ? 'right' : 'left', paddingLeft: '4px', paddingRight: '4px' }}>
+                            <div style={{ fontSize: '11px', color: '#9CA3AF', marginTop: '4px', textAlign: isMine ? 'right' : 'left', paddingLeft: '4px', paddingRight: '4px' }}>
                               {formatTime(msg.createdAt)}
                             </div>
                           </div>
@@ -301,7 +293,7 @@ const Messages = () => {
               </div>
 
               {/* Input bar */}
-              <div style={{ padding: '14px 20px', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+              <div style={{ padding: '14px 20px', borderTop: '1px solid #E5E7EB', background: '#FFFFFF' }}>
                 <form onSubmit={sendMessage} style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                   <div style={{ flex: 1, position: 'relative' }}>
                     <input
@@ -322,20 +314,21 @@ const Messages = () => {
                   </div>
                   <button type="submit" disabled={sending || !content.trim()}
                     style={{
-                      background: content.trim() ? 'linear-gradient(135deg, #6C63FF, #8B5CF6)' : 'rgba(255,255,255,0.08)',
-                      border: 'none', borderRadius: '12px', padding: '13px 20px',
-                      color: content.trim() ? 'white' : 'rgba(255,255,255,0.3)',
+                      background: content.trim() ? '#4F46E5' : '#E5E7EB',
+                      border: 'none', borderRadius: '8px', padding: '10px 20px',
+                      color: content.trim() ? 'white' : '#9CA3AF',
                       cursor: content.trim() ? 'pointer' : 'not-allowed',
-                      fontWeight: '700', fontSize: '14px', transition: 'all 0.2s ease',
+                      fontWeight: '600', fontSize: '14px', transition: 'all 0.2s ease',
                       whiteSpace: 'nowrap', minWidth: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                      fontFamily: "'Inter', sans-serif",
                     }}
-                    onMouseEnter={e => { if (content.trim()) e.currentTarget.style.transform = 'translateY(-2px)'; }}
-                    onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+                    onMouseEnter={e => { if (content.trim()) e.currentTarget.style.background = '#4338CA'; }}
+                    onMouseLeave={e => { if (content.trim()) e.currentTarget.style.background = '#4F46E5'; }}
                   >
                     {sending ? <div className="spinner" style={{ width: '16px', height: '16px' }} /> : <>Send ➤</>}
                   </button>
                 </form>
-                <div style={{ color: 'rgba(255,255,255,0.2)', fontSize: '11px', marginTop: '8px' }}>
+                <div style={{ color: '#9CA3AF', fontSize: '11px', marginTop: '8px' }}>
                   Press Enter to send · 📧 to preview as email notification
                 </div>
               </div>
@@ -344,13 +337,13 @@ const Messages = () => {
         </div>
       </div>
 
-      {/* ── New Chat Modal ── */}
+      {/* New Chat Modal */}
       {showNewChat && (
         <div className="modal-overlay" onClick={() => setShowNewChat(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <h3 style={{ color: 'white', fontSize: '20px', fontWeight: '700', marginBottom: '8px' }}>💬 Start New Chat</h3>
-            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '14px', marginBottom: '24px', lineHeight: '1.6' }}>
-              Enter the <strong style={{ color: 'rgba(255,255,255,0.8)' }}>User ID</strong> of the person you want to message.<br />
+            <h3 style={{ color: '#111827', fontSize: '20px', fontWeight: '700', marginBottom: '8px' }}>💬 Start New Chat</h3>
+            <p style={{ color: '#6B7280', fontSize: '14px', marginBottom: '24px', lineHeight: '1.6' }}>
+              Enter the <strong style={{ color: '#374151' }}>User ID</strong> of the person you want to message.<br />
               You can find it in their job listing or your Dashboard.
             </p>
             <div className="form-group">
@@ -388,22 +381,22 @@ const Messages = () => {
         </div>
       )}
 
-      {/* ── Email Preview Modal ── */}
+      {/* Email Preview Modal */}
       {showEmailPreview && (
         <div className="modal-overlay" onClick={() => setShowEmailPreview(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '580px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h3 style={{ color: 'white', fontSize: '18px', fontWeight: '700' }}>📧 Email Notification Preview</h3>
+              <h3 style={{ color: '#111827', fontSize: '18px', fontWeight: '700' }}>📧 Email Notification Preview</h3>
               <button onClick={() => setShowEmailPreview(false)}
-                style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: '22px', lineHeight: 1 }}>×</button>
+                style={{ background: 'none', border: 'none', color: '#9CA3AF', cursor: 'pointer', fontSize: '22px', lineHeight: 1 }}>×</button>
             </div>
-            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px', marginBottom: '16px' }}>
+            <p style={{ color: '#6B7280', fontSize: '13px', marginBottom: '16px' }}>
               This is how your message would appear as an email to the recipient:
             </p>
             <div style={{
-              background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)',
-              borderRadius: '12px', padding: '20px',
-              fontFamily: 'monospace', fontSize: '13px', color: 'rgba(255,255,255,0.65)',
+              background: '#F9FAFB', border: '1px solid #E5E7EB',
+              borderRadius: '8px', padding: '20px',
+              fontFamily: 'monospace', fontSize: '13px', color: '#374151',
               whiteSpace: 'pre-wrap', lineHeight: '1.7', maxHeight: '280px', overflowY: 'auto',
             }}>
               {emailPreview}
