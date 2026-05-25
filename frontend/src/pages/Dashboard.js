@@ -198,7 +198,7 @@ const Dashboard = () => {
       {loading ? (
         <div style={{ display: 'grid', gap: '16px' }}>
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '20px', padding: '28px' }}>
+            <div key={i} style={{ background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: '12px', padding: '28px' }}>
               {[70, 50, 40].map((w, j) => (
                 <div key={j} className="skeleton" style={{ height: '16px', width: `${w}%`, marginBottom: '12px' }} />
               ))}
@@ -226,27 +226,27 @@ const Dashboard = () => {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
                 <div style={{ flex: 1 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px', flexWrap: 'wrap' }}>
-                    {job.title && <h3 style={{ color: 'white', fontSize: '17px', fontWeight: '700' }}>{job.title}</h3>}
+                    {job.title && <h3 style={{ color: '#111827', fontSize: '17px', fontWeight: '700' }}>{job.title}</h3>}
                     <span className={`badge ${statusBadge[job.status] || 'badge-open'}`}>
                       {job.status}
                     </span>
                     <span style={{
-                      background: 'rgba(255,255,255,0.06)', borderRadius: '6px', padding: '3px 10px',
-                      fontSize: '12px', color: 'rgba(255,255,255,0.5)',
+                      background: '#F3F4F6', borderRadius: '6px', padding: '3px 10px',
+                      fontSize: '12px', color: '#6B7280', border: '1px solid #E5E7EB',
                     }}>
                       {job.isEmployer || job.isClient ? '👔 Client' : '👨‍💻 Freelancer'}
                     </span>
                   </div>
-                  <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: '14px', lineHeight: '1.6' }}>
+                  <p style={{ color: '#6B7280', fontSize: '14px', lineHeight: '1.6' }}>
                     {job.description?.length > 150 ? job.description.slice(0, 150) + '...' : job.description}
                   </p>
                 </div>
 
                 <div style={{ textAlign: 'right' }}>
                   {job.source === 'email' ? (
-                    <div style={{ color: '#43E97B', fontSize: '20px', fontWeight: '800' }}>${job.budget}</div>
+                    <div style={{ color: '#16A34A', fontSize: '20px', fontWeight: '800' }}>${job.budget}</div>
                   ) : (
-                    <div style={{ color: '#43E97B', fontSize: '20px', fontWeight: '800' }}>⟠ {job.payment} ETH</div>
+                    <div style={{ color: '#16A34A', fontSize: '20px', fontWeight: '800' }}>⟠ {job.payment} ETH</div>
                   )}
                 </div>
               </div>
@@ -254,11 +254,11 @@ const Dashboard = () => {
               {/* Parties */}
               {source === 'blockchain' && (
                 <div style={{ display: 'flex', gap: '16px', marginBottom: '16px', flexWrap: 'wrap' }}>
-                  <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '12px', fontFamily: 'monospace' }}>
+                  <div style={{ color: '#6B7280', fontSize: '12px', fontFamily: 'monospace' }}>
                     Client: {job.client?.slice(0, 8)}...{job.client?.slice(-6)}
                   </div>
                   {job.freelancer && job.freelancer !== ethers.ZeroAddress && (
-                    <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '12px', fontFamily: 'monospace' }}>
+                    <div style={{ color: '#6B7280', fontSize: '12px', fontFamily: 'monospace' }}>
                       Freelancer: {job.freelancer?.slice(0, 8)}...{job.freelancer?.slice(-6)}
                     </div>
                   )}
@@ -268,12 +268,12 @@ const Dashboard = () => {
               {source === 'email' && (job.postedBy || job.acceptedBy) && (
                 <div style={{ display: 'flex', gap: '16px', marginBottom: '16px', flexWrap: 'wrap' }}>
                   {job.postedBy?.name && (
-                    <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px' }}>
+                    <div style={{ color: '#6B7280', fontSize: '13px' }}>
                       👔 Client: {job.postedBy.name}
                     </div>
                   )}
                   {job.acceptedBy?.name && (
-                    <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px' }}>
+                    <div style={{ color: '#6B7280', fontSize: '13px' }}>
                       👨‍💻 Freelancer: {job.acceptedBy.name}
                     </div>
                   )}
@@ -333,7 +333,7 @@ const Dashboard = () => {
                 )}
 
                 {job.status === 'Completed' && (
-                  <span style={{ color: '#43E97B', fontSize: '13px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ color: '#16A34A', fontSize: '13px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}>
                     ✅ Completed
                   </span>
                 )}
@@ -347,8 +347,8 @@ const Dashboard = () => {
       {reviewModal && (
         <div className="modal-overlay" onClick={() => setReviewModal(null)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <h3 style={{ color: 'white', fontSize: '20px', fontWeight: '700', marginBottom: '8px' }}>⭐ Leave a Review</h3>
-            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '14px', marginBottom: '28px' }}>
+            <h3 style={{ color: '#111827', fontSize: '20px', fontWeight: '700', marginBottom: '8px' }}>⭐ Leave a Review</h3>
+            <p style={{ color: '#6B7280', fontSize: '14px', marginBottom: '28px' }}>
               Share your experience to help the community.
             </p>
 

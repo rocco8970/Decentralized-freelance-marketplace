@@ -28,87 +28,83 @@ const Register = () => {
 
   return (
     <div style={{
-      minHeight: 'calc(100vh - 70px)', display: 'flex',
+      minHeight: 'calc(100vh - 64px)', display: 'flex',
       alignItems: 'center', justifyContent: 'center', padding: '40px 24px',
-      position: 'relative', zIndex: 1,
+      background: '#F9FAFB',
     }}>
       <div style={{
-        position: 'absolute', top: '20%', left: '50%', transform: 'translateX(-50%)',
-        width: '600px', height: '400px', borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(255,101,132,0.1), transparent)',
-        pointerEvents: 'none',
-      }} />
-
-      <div style={{
-        background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(20px)',
-        border: '1px solid rgba(255,255,255,0.08)', borderRadius: '28px',
-        padding: '48px', maxWidth: '480px', width: '100%',
-        animation: 'fadeInUp 0.6s ease-out',
-        boxShadow: '0 40px 80px rgba(0,0,0,0.4)',
+        background: 'white', border: '1px solid #E5E7EB',
+        borderRadius: '12px', padding: '40px',
+        maxWidth: '460px', width: '100%',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+        animation: 'fadeInUp 0.4s ease-out',
       }}>
-        <div style={{ textAlign: 'center', marginBottom: '36px' }}>
-          <div style={{ fontSize: '56px', marginBottom: '16px', animation: 'float 3s ease-in-out infinite' }}>🚀</div>
-          <h2 style={{
-            fontFamily: "'Space Grotesk', sans-serif", fontSize: '28px', fontWeight: '700',
-            background: 'linear-gradient(135deg, #fff, rgba(255,255,255,0.7))',
-            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-            marginBottom: '8px',
-          }}>Create Account</h2>
-          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '14px' }}>Join the decentralized freelance revolution</p>
+        {/* Header */}
+        <div style={{ marginBottom: '28px' }}>
+          <h2 style={{ fontSize: '22px', fontWeight: '700', color: '#111827', marginBottom: '4px', letterSpacing: '-0.3px' }}>
+            Create your account
+          </h2>
+          <p style={{ color: '#6B7280', fontSize: '14px' }}>Join the WorkNova marketplace</p>
         </div>
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label className="form-label">Full Name</label>
+            <label className="form-label">Full name</label>
             <input type="text" placeholder="John Doe" value={form.name}
               onChange={set('name')} required disabled={loading} className="input-dark" />
           </div>
           <div className="form-group">
-            <label className="form-label">Email Address</label>
+            <label className="form-label">Email address</label>
             <input type="email" placeholder="you@example.com" value={form.email}
               onChange={set('email')} required disabled={loading} className="input-dark" />
           </div>
           <div className="form-group">
             <label className="form-label">I am a...</label>
-            <div style={{ display: 'flex', gap: '12px' }}>
+            <div style={{ display: 'flex', gap: '10px' }}>
               {['freelancer', 'client'].map(r => (
                 <button key={r} type="button" onClick={() => setForm(f => ({ ...f, role: r }))}
                   style={{
-                    flex: 1, padding: '12px', borderRadius: '12px', cursor: 'pointer',
-                    border: form.role === r ? '1px solid rgba(108,99,255,0.6)' : '1px solid rgba(255,255,255,0.1)',
-                    background: form.role === r ? 'rgba(108,99,255,0.15)' : 'rgba(255,255,255,0.03)',
-                    color: form.role === r ? '#6C63FF' : 'rgba(255,255,255,0.5)',
-                    fontWeight: '600', fontSize: '14px', transition: 'all 0.2s ease',
+                    flex: 1, padding: '10px', borderRadius: '6px', cursor: 'pointer',
+                    border: form.role === r ? '1px solid #2563EB' : '1px solid #D1D5DB',
+                    background: form.role === r ? '#EFF6FF' : 'white',
+                    color: form.role === r ? '#2563EB' : '#6B7280',
+                    fontWeight: form.role === r ? '600' : '400',
+                    fontSize: '14px', transition: 'all 0.15s ease',
+                    fontFamily: "'Inter', sans-serif",
+                    textTransform: 'capitalize',
                   }}>
-                  {r === 'freelancer' ? '👨‍💻 Freelancer' : '🏢 Client'}
+                  {r}
                 </button>
               ))}
             </div>
           </div>
           <div className="form-group">
             <label className="form-label">Password</label>
-            <input type="password" placeholder="Min 6 characters" value={form.password}
+            <input type="password" placeholder="Min. 6 characters" value={form.password}
               onChange={set('password')} required disabled={loading} className="input-dark" />
           </div>
           <div className="form-group">
-            <label className="form-label">Confirm Password</label>
+            <label className="form-label">Confirm password</label>
             <input type="password" placeholder="Repeat your password" value={form.confirm}
               onChange={set('confirm')} required disabled={loading} className="input-dark" />
           </div>
 
-          {error && <div className="alert alert-error">⚠️ {error}</div>}
-          {success && <div className="alert alert-success">✅ {success}</div>}
+          {error && <div className="alert alert-error">{error}</div>}
+          {success && <div className="alert alert-success">{success}</div>}
 
           <button type="submit" disabled={loading} className="btn-gradient"
-            style={{ width: '100%', padding: '16px', fontSize: '16px', borderRadius: '14px' }}>
-            {loading ? <><div className="spinner" style={{ display: 'inline-block', marginRight: '8px' }} />Creating Account...</> : 'Create Account'}
+            style={{ width: '100%', padding: '11px', fontSize: '14px', borderRadius: '6px', marginTop: '4px' }}>
+            {loading
+              ? <><div className="spinner" style={{ borderTopColor: 'white', borderColor: 'rgba(255,255,255,0.3)' }} /><span>Creating account...</span></>
+              : 'Create account'
+            }
           </button>
         </form>
 
-        <div style={{ marginTop: '28px', textAlign: 'center', paddingTop: '24px', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
-          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '14px' }}>
+        <div style={{ marginTop: '24px', textAlign: 'center', paddingTop: '20px', borderTop: '1px solid #F3F4F6' }}>
+          <p style={{ color: '#6B7280', fontSize: '14px' }}>
             Already have an account?{' '}
-            <Link to="/login" style={{ color: '#6C63FF', fontWeight: '700', textDecoration: 'none' }}>
+            <Link to="/login" style={{ color: '#2563EB', fontWeight: '500', textDecoration: 'none' }}>
               Sign in
             </Link>
           </p>
